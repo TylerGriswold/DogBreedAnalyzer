@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                 int i = spType.getSelectedItemPosition();
                 String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json" + "?location=" + currentLat + "," + currentLong + "&radius=5000" +
                         "&types=" + placeTypeList[i] +"&keyword="+ placeTypeList[i] + "&key=" + getResources().getString(R.string.google_maps_key);
-                System.out.println(url);
+//                System.out.println(url);
                 new MainActivity.PlaceTask().execute(url);
 
             }
