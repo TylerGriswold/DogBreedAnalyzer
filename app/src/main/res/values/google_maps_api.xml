@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--https://stackoverflow.com/questions/33872796/how-to-add-a-google-map-to-an-existing-android-studio-project -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyCjcD54dEgPbsM5KwXu7J9bR7HX-0xPyGY</string>
+</resources>
