@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.squareup.picasso.Picasso;
@@ -35,7 +36,7 @@ public class results extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.results);
 
-        Button next = (Button) findViewById(R.id.bt_main);
+        ImageButton next = (ImageButton) findViewById(R.id.bt_main);
         next.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent myIntent = new Intent(view.getContext(), MainActivity.class);

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
@@ -46,7 +47,7 @@ public class Activity2 extends AppCompatActivity {
      */
 
     Spinner spType;
-    Button btFind;
+    ImageButton btFind;
     SupportMapFragment supportMapFragment;
     GoogleMap map;
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -56,7 +57,7 @@ public class Activity2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.gps_layout);
 
-        Button next = (Button) findViewById(R.id.bt_Home);
+        ImageButton next = (ImageButton) findViewById(R.id.bt_Home);
         next.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent myIntent = new Intent(view.getContext(), MainActivity.class);
