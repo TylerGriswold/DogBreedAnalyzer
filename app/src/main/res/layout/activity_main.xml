@@ -26,7 +26,7 @@
             android:layout_height="match_parent"
             android:paddingLeft="2dp"
 
-            android:paddingTop="7dp"
+            android:paddingTop="6dp"
 
             android:text="@string/app_name"
             android:textColor="#422d5d"
@@ -42,7 +42,7 @@
             android:layout_width="60dp"
             android:layout_height="match_parent"
             android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="5dp"
             android:background="@android:color/transparent"
             android:padding="5dp"
             android:src="@drawable/camera_icon"></ImageButton>
@@ -51,7 +51,7 @@
             android:id="@+id/selectPhotoButton"
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:layout_marginLeft="10dp"
+
             android:layout_marginRight="10dp"
             android:background="@android:color/transparent"
             android:padding="5dp"
