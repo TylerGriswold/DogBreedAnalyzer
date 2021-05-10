@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,6 +26,26 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.widget.ImageView;
+import android.widget.TextView;
+import com.squareup.picasso.Picasso;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.w3c.dom.Text;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -54,25 +75,33 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "tag";
     private Button takePhotoButton;
     private Button selectPhotoButton;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
 
-    Spinner spType;
-    Button btFind;
-    SupportMapFragment supportMapFragment;
-    GoogleMap map;
-    FusedLocationProviderClient fusedLocationProviderClient;
-    double currentLat = 0, currentLong = 0;
+
+    ImageView imageView = null;
+    Bitmap bitmap = null;
+    Module module = null;
+    Uri selectedImage = null;
 
     //https://developer.android.com/training/camera/photobasics
     String currentPhotoPath;
+    String realPath = "";
+    Intent intent = null;
+   public static String results;
+    int REQUEST_CODE;
+
+
 
     private File createImageFile() throws IOException {
         //Create an image file name
@@ -86,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         );
         //Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
+        System.out.println(currentPhotoPath);
         return image;
     }
 
@@ -127,8 +157,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button takePhotoButton = (Button) findViewById(R.id.takePhotoButton);
-        Button selectPhotoButton = (Button) findViewById(R.id.selectPhotoButton);
+        takePhotoButton = (Button) findViewById(R.id.takePhotoButton);
+        selectPhotoButton = (Button) findViewById(R.id.selectPhotoButton);
 
         //The below code allows for us to access the camera on the Android phone when clicking the respective button.
         //https://stackoverflow.com/questions/13977245/android-open-camera-from-button (not in use)
@@ -139,8 +169,11 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                REQUEST_CODE = 0;
                 dispathTakePictureIntent();
                 galleryAddPic();
+                startActivityForResult(intent, REQUEST_CODE);
+                onActivityResult(REQUEST_CODE,RESULT_OK,intent);
             }
         });
 
@@ -148,201 +181,222 @@ public class MainActivity extends AppCompatActivity {
         selectPhotoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK,
+                REQUEST_CODE = 1;
+                intent = new Intent(Intent.ACTION_PICK,
                         android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent, 0);
+                startActivityForResult(intent, REQUEST_CODE);
+//                onActivityResult(1,RESULT_OK,intent);
+//                onActivityResult(REQUEST_CODE,RESULT_OK,intent);
             }
+
+        });
+        onActivityResult(REQUEST_CODE,RESULT_OK,intent);
+
+        Button gps = (Button) findViewById(R.id.bt_gps);
+        gps.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent myIntent = new Intent(view.getContext(), Activity2.class);
+                startActivityForResult(myIntent, 0);
+            }
+
         });
 
-        spType = findViewById(R.id.sp_type);
-        btFind = findViewById(R.id.bt_find);
-        supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
-
-        String[] placeTypeList = {"animal shelter", "pet store"};
-
-        String[] placeNameList = {"Animal Shelter", "pet store"};
-
-        spType.setAdapter(new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, placeNameList));
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            getCurrentLocation();
-        } else {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 44);
-        }
-        btFind.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int i = spType.getSelectedItemPosition();
-                String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json" + "?location=" + currentLat + "," + currentLong + "&radius=5000" +
-                        "&types=" + placeTypeList[i] +"&keyword="+ placeTypeList[i] + "&key=" + getResources().getString(R.string.google_maps_key);
-//                System.out.println(url);
-                new MainActivity.PlaceTask().execute(url);
-
+        Button r = (Button) findViewById(R.id.bt_results);
+        r.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent myIntent = new Intent(view.getContext(), results.class);
+                startActivityForResult(myIntent, 0);
             }
+
         });
-
-        //Dog Analyzer
-        Bitmap bitmap = null;
-        Module module = null;
-        try {
-            // creating bitmap from packaged into app android asset 'image.jpg',
-            // app/src/main/assets/image.jpg
-            bitmap = BitmapFactory.decodeStream(getAssets().open("imag1.jpg"));
-            // loading serialized torchscript module from packaged into app android asset model.pt,
-            // app/src/model/assets/model.pt
-            module = Module.load(assetFilePath(this, "ResNetDogs50_final.pt"));
-        } catch (IOException e) {
-            Log.e("PytorchHelloWorld", "Error reading assets", e);
-            finish();
-        }
-
-        // showing image on UI
-        ImageView imageView = findViewById(R.id.image);
-        imageView.setImageBitmap(bitmap);
-
-        // preparing input tensor
-        Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(bitmap,
-                TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
-
-        // running the model
-        assert module != null; //Added
-        final Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
-
-        // getting tensor content as java array of floats
-        final float[] scores = outputTensor.getDataAsFloatArray();
-
-        // searching for the index with maximum score
-        float maxScore = -Float.MAX_VALUE;
-        int maxScoreIdx = -1;
-        for (int i = 0; i < scores.length; i++) {
-            if (scores[i] > maxScore) {
-                maxScore = scores[i];
-                maxScoreIdx = i;
-            }
-        }
-
-        String className = ImageNetClasses.IMAGENET_CLASSES[maxScoreIdx];
-
-        // showing className on UI
-        TextView textView = findViewById(R.id.text);
-        textView.setText(className);
 
     }
 
-    private void getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Task<Location> task = fusedLocationProviderClient.getLastLocation();
-        task.addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if(location != null){
-                    currentLat = location.getLatitude();
-                    currentLong = location.getLongitude();
+    public String analysis(String realPath) { //maybe bitmap and module
 
-                    supportMapFragment.getMapAsync(new OnMapReadyCallback() {
-                        @Override
-                        public void onMapReady(GoogleMap googleMap) {
-                            map = googleMap;
-                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLat, currentLong), 10));
-                        }
-                    });
-                }
-            }
-        });
+     try
+    {
+        // creating bitmap from packaged into app android asset 'image.jpg',
+        // app/src/main/assets/image.jpg
+//        bitmap = BitmapFactory.decodeStream(getAssets().open(realPath));
+        bitmap = BitmapFactory.decodeFile(realPath);
+        Log.i(TAG, "analysis: bitmap "+ bitmap);
+        // loading serialized torchscript module from packaged into app android asset model.pt,
+        // app/src/model/assets/model.pt
+        module = Module.load(assetFilePath(this, "ResNetDogs50_final.pt"));
+    } catch(IOException e) {
+        Log.e("PytorchHelloWorld", "Error reading assets", e);
+        finish();
     }
+
+    // preparing input tensor
+    Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(bitmap,
+            TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
+
+    // running the model
+    assert module !=null; //Added
+    final Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+
+    // getting tensor content as java array of floats
+    final float[] scores = outputTensor.getDataAsFloatArray();
+
+    // searching for the index with maximum score
+    float maxScore = -Float.MAX_VALUE;
+    int maxScoreIdx = -1;
+    for(int i = 0; i<scores.length;i++) {
+        if (scores[i] > maxScore) {
+            maxScore = scores[i];
+            maxScoreIdx = i;
+        }
+    }
+
+    String className = ImageNetClasses.IMAGENET_CLASSES[maxScoreIdx];
+    Toast.makeText(this, className, Toast.LENGTH_SHORT).show();
+
+    return className;
+//     showing className on UI
+
+    }
+
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == 44){
-            if(grantResults.length > 0  && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                getCurrentLocation();
-            }
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        String br;
+        if (requestCode == 1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+
+            Uri uri = data.getData();
+
+            realPath = ImageFilePath.getPath(MainActivity.this, data.getData());
+//                realPath = RealPathUtil.getRealPathFromURI_API19(this, data.getData());
+
+            Log.i(TAG, "onActivityResult: file path : " + realPath);
+            results = analysis(realPath);
+            Log.i(TAG, "onActivityResult: results " + results);
+
+        } else if(requestCode == 0 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            currentPhotoPath = ImageFilePath.getPath(MainActivity.this, data.getData());
+//                realPath = RealPathUtil.getRealPathFromURI_API19(this, data.getData());
+
+            Log.i(TAG, "onActivityResult: file path : " + currentPhotoPath);
+            results = analysis(currentPhotoPath);
+
+            }else{
+                Toast.makeText(this, "Something Went Wrong", Toast.LENGTH_SHORT).show();
         }
+
     }
+//    void scrapeme(){
+//        final ImageView img = findViewById(R.id.imgView);
+//        final TextView breed = findViewById(R.id.breed);
+//        final TextView temp = findViewById(R.id.temp);
+//        final TextView pop = findViewById(R.id.pop);
+//        final TextView height = findViewById(R.id.height);
+//        final TextView weight = findViewById(R.id.weight);
+//        final TextView life = findViewById(R.id.life);
+//        final TextView group = findViewById(R.id.group);
+//        final TextView description = findViewById(R.id.desc);
+//        final TextView fun_fact = findViewById(R.id.ff);
+//        new Thread(new Runnable() {
+//            final dogScrape webpageScrape = new dogScrape();
+//
+//            @Override
+//            public void run() {
+//                String db = results.replace("_", "-");
+//                String webPath = "https://www.akc.org/dog-breeds/".concat(db);
+//                Log.i(TAG, "run: webpage: " + webPath);
+//                try {
+//                    Document doc = Jsoup.connect(webPath).get();
+//                    Elements pool = doc.select("body");
+//                    Elements img = pool.select("section#breed-care").select("div").select("img");
+//                    Elements spans = pool.select("div").select("ul").select("span");
+//
+//                    List<String> details = spans.eachText();
+//                    ArrayList<String> dogDetails = new ArrayList<String>();
+//                    Elements facts = pool.select("div").select("section#fact-slider").select("span");
+//                    ArrayList<String> dogFacts = new ArrayList<String>();
+//                    Random rand = new Random();
+//
+//
+//
+//                    Elements para = pool.select("section");
+//
+//                    //puts fun facts into String ArrayList
+//                    for(int i = 0; i < facts.size()-1; i++) {
+//                        if(!facts.select("span").get(i).text().isEmpty()) {
+//                            dogFacts.add(facts.select("span").get(i).text());
+//                        }
+//                    }
+//
+//                    dogDetails.add(img.attr("data-src"));
+//
+//                    //gets dog details
+//                    for(int i = 0; i < details.size()-1; i++)
+//                        if(details.get(i).equals("Temperament:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//                        else if(details.get(i).equals("AKC Breed Popularity:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//                        else if(details.get(i).equals("Height:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//                        else if(details.get(i).equals("Weight:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//                        else if(details.get(i).equals("Life Expectancy:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//                        else if(details.get(i).equals("Group:")) {
+//                            dogDetails.add(details.get(i+1));
+//                        }
+//
+//                    //Puts description and random fact into report
+//                    dogDetails.add(para.get(0).select("div").last().text());
+//                    dogDetails.add(dogFacts.get(rand.nextInt(dogFacts.size()-1)));
+//
+//                    webpageScrape.setBreed(db.toUpperCase());
+//                    webpageScrape.setImgUrl(dogDetails.get(0));
+//                    webpageScrape.setTemp(dogDetails.get(1));
+//                    webpageScrape.setPop(dogDetails.get(2));
+//                    webpageScrape.setHeight(dogDetails.get(3));
+//                    webpageScrape.setWeight(dogDetails.get(4));
+//                    webpageScrape.setLife(dogDetails.get(5));
+//                    webpageScrape.setGroup(dogDetails.get(6));
+//                    webpageScrape.setDescription(dogDetails.get(7));
+//                    webpageScrape.setFun_fact(dogDetails.get(8));
+//                }
+//
+//                catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        breed.setText(webpageScrape.getBreed());
+//                        Picasso.get()
+//                                .load(webpageScrape.getImgUrl())
+//                                .into(img);
+//
+//                        temp.setText(webpageScrape.getTemp());
+//                        pop.setText(webpageScrape.getPop());
+//                        height.setText(webpageScrape.getHeight());
+//                        weight.setText(webpageScrape.getWeight());
+//                        life.setText(webpageScrape.getLife());
+//                        group.setText(webpageScrape.getGroup());
+//                        description.setText(webpageScrape.getDescription());
+//                        fun_fact.setText(webpageScrape.getFun_fact());
+//
+//                    }
+//                });
+//
+//
+//            }
+//        }).start();
+//    }
 
-    private class PlaceTask extends AsyncTask<String,Integer,String> {
-
-
-        @Override
-        protected String doInBackground(String... strings) {
-            String data = null;
-            try {
-                data =  downloadUrl(strings[0]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return data;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            new MainActivity.ParserTask().execute(s);
-//            Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
-
-        }
-    }
-
-    private String downloadUrl(String string) throws IOException {
-        URL url = new URL(string);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.connect();
-        InputStream stream = connection.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        StringBuilder builder = new StringBuilder();
-        String line = "";
-        while((line = reader.readLine()) != null){
-            builder.append(line);
-        }
-        String data = builder.toString();
-        reader.close();
-        return data;
-    }
-
-    private class ParserTask extends AsyncTask<String,Integer, List<HashMap<String,String>>> {
-        @Override
-        protected List<HashMap<String, String>> doInBackground(String... strings) {
-            JsonParser jsonParser = new JsonParser();
-            List<HashMap<String,String>> mapList = null;
-            JSONObject object = null;
-            try {
-                object = new JSONObject(strings[0]);
-                mapList = jsonParser.parseResult(object);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return mapList;
-        }
-
-        @Override
-        protected void onPostExecute(List<HashMap<String, String>> hashMaps) {
-            map.clear();
-            for(int i = 0; i<hashMaps.size(); i++){
-                HashMap<String,String> hashMapList = hashMaps.get(i);
-                double lat = Double.parseDouble(hashMapList.get("lat"));
-                double lng = Double.parseDouble(hashMapList.get("lng"));
-                String name = hashMapList.get("name");
-                LatLng latLng = new LatLng(lat,lng);
-                MarkerOptions options = new MarkerOptions();
-                options.position(latLng);
-                options.title(name);
-                map.addMarker(options);
-            }
-        }
-    }
-
-    //Dog Analyzer
+//    Dog Analyzer
     /**
      * Copies specified asset to the file in /files app directory and returns this file absolute path.
      *
@@ -366,5 +420,8 @@ public class MainActivity extends AppCompatActivity {
             return file.getAbsolutePath();
         }
     }
+
+
+
 
 }

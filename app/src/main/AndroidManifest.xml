@@ -32,7 +32,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+        <activity android:name=".Activity2">
+
+        </activity>
+        <activity android:name=".results">
+
+        </activity>
+
         <provider
             android:authorities="com.example.android.fileprovider"
             android:name="androidx.core.content.FileProvider"
@@ -49,7 +57,7 @@
             android:value="@string/google_maps_key" />
         <!--Foreground Service Permissions-->
         <service
-            android:name="MyNavigationService"
+            android:name="DogBreedAnalyzer"
             android:foregroundServiceType="location"
             tools:ignore="MissingClass" />
     </application>

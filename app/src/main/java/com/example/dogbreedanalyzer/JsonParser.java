@@ -23,7 +23,6 @@ public class JsonParser {
         }
         return dataList;
     }
-
     private List<HashMap<String,String>> parseJsonArray(JSONArray jsonArray){
         List<HashMap<String,String>> dataList = new ArrayList<>();
         for(int i = 0; i<jsonArray.length(); i++){
