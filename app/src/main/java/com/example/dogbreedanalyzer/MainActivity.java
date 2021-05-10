@@ -251,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     String className = ImageNetClasses.IMAGENET_CLASSES[maxScoreIdx];
-    Toast.makeText(this, className, Toast.LENGTH_SHORT).show();
+//    Toast.makeText(this, className, Toast.LENGTH_SHORT).show();
 
     return className;
 //     showing className on UI
@@ -282,7 +282,9 @@ public class MainActivity extends AppCompatActivity {
             results = analysis(currentPhotoPath);
 
             }else{
-                Toast.makeText(this, "Something Went Wrong", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Something Went Wrong", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "onActivityResult: error " );
+
         }
 
     }

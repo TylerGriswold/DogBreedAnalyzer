@@ -35,15 +35,13 @@
             tools:layout_editor_absoluteY="75dp" />
 
 
-
-
     </LinearLayout>
 
     <fragment
         android:id="@+id/google_map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="508dp" />
+        android:layout_height="540dp" />
 
     <LinearLayout
         android:layout_width="match_parent"

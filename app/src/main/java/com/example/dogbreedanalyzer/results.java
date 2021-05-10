@@ -54,7 +54,6 @@ public class results extends AppCompatActivity {
         });
 
 
-
         final ImageView img = findViewById(R.id.imgView);
         final TextView breed = findViewById(R.id.breed);
         final TextView temp = findViewById(R.id.temp);
@@ -68,6 +67,7 @@ public class results extends AppCompatActivity {
 
         new Thread(new Runnable() {
             final dogScrape webpageScrape = new dogScrape();
+
 
             @Override
             public void run() {
