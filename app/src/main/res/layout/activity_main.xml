@@ -32,6 +32,7 @@
             android:textColor="#422d5d"
             android:textSize="30dp"
 
+
             android:textStyle="bold">
 
         </TextView>
