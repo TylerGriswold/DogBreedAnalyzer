@@ -1,6 +1,6 @@
 # DogBreedAnalyzer
 
-<h1>To Run:</h1>
+<h3>To Run:</h3>
 
 <li>Clone Repo </li>
 <li>Install Android Studio</li>
