@@ -1,9 +1,10 @@
 # DogBreedAnalyzer
 
-To Run:
+<h1>To Run:</h1>
 
--Install Android Studio
--File -> New -> Import Project -> Select Root Folder
--Make sure gradle files are synced
--Create Emulator (we used Pixel 4 API 28)
--Run
+<li>Clone Repo </li>
+<li>Install Android Studio</li>
+<li>File -> New -> Import Project -> Select Root Folder</li>
+<li>Make sure gradle files are synced</li>
+<li>Create Emulator (we used Pixel 4 API 28)</li>
+<li>Run</li>
